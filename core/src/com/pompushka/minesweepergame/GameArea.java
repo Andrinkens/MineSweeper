@@ -1,5 +1,8 @@
 package com.pompushka.minesweepergame;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.ListIterator;
 import java.util.Random;
 
 import com.badlogic.gdx.Gdx;
@@ -7,6 +10,7 @@ import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -28,6 +32,8 @@ public class GameArea implements InputProcessor{
 	
 	char gameArray[][];
 	boolean visible[][];
+	
+	ArrayList<Pos> tilesToCheck = new ArrayList<Pos>();
 	
 	Sprite noneSq = new Sprite(new Texture("tile2.png"));
 	Sprite mineSq = new Sprite(new Texture("mine.png"));
@@ -244,9 +250,95 @@ public class GameArea implements InputProcessor{
 		return false;
 	}
 	
-	private boolean openClearTiles(int col, int row){
+	private ArrayList<Pos> checkClearTilesNear(int col, int row){
 		visible[col][row] = true;
-		if ()
+		ArrayList<Pos> retVal = new ArrayList<Pos>();
+		if (col>0)
+			if ((!visible[col-1][row])){
+				if (gameArray[col-1][row] == 0)	retVal.add(new Pos(col-1,row));
+				else if (gameArray[col-1][row] != 255) visible[col-1][row] = true;
+			}
+		if (col<cols-2)
+			if (!visible[col+1][row]){
+				if (gameArray[col+1][row] == 0)	retVal.add(new Pos(col+1,row));
+				else if	(gameArray[col+1][row] != 255)	visible[col+1][row] = true;
+			}
+		if (row>0)
+			if (!visible[col][row-1]){
+				if (gameArray[col][row-1] == 0)	retVal.add(new Pos(col,row-1));
+				else if (gameArray[col][row-1] != 255)	visible[col][row-1] = true;
+			}
+		if (row<rows-2)
+			if (!visible[col][row+1]){
+				if (gameArray[col][row+1] == 0)	retVal.add(new Pos(col,row+1));
+				else if (gameArray[col][row+1] != 255)	visible[col][row+1] = true;
+			}
+		/*
+		if (col>0)
+			if ((!visible[col-1][row]) && (gameArray[col-1][row] == 0))	retVal.add(new Pos(col-1,row));
+		if (col<cols-2)
+			if ((!visible[col+1][row]) && (gameArray[col+1][row] == 0))	retVal.add(new Pos(col+1,row));
+		if (row>0)
+			if ((!visible[col][row-1]) && (gameArray[col][row-1] == 0))	retVal.add(new Pos(col,row-1));
+		if (row<rows-2)
+			if ((!visible[col][row+1]) && (gameArray[col][row+1] == 0))	retVal.add(new Pos(col,row+1));*/
+		return retVal;
+	}
+	
+	private void openClearTilesRec(int col, int row){
+		
+		ArrayList<Pos> tempVal = new ArrayList<Pos>();
+		tempVal.addAll(tilesToCheck);
+		
+		for (Pos item : tempVal) {
+			Gdx.app.log("MineSweeper", "Col: " + item.x + " Row: " + item.y);
+			tilesToCheck.addAll(checkClearTilesNear(item.x,item.y));
+			tilesToCheck.remove(item);
+		}
+		
+		if (!tilesToCheck.isEmpty())openClearTilesRec(tilesToCheck.get(0).x,tilesToCheck.get(0).y);
+		/*
+		ListIterator<Pos> iterator = tilesToCheck.listIterator();
+		while(iterator.hasNext()){
+			if (iterator.next() == null)	break;
+			Gdx.app.log("MineSweeper", "Col: " + col + " Row: " + row);
+			Pos pos = iterator.next();
+			col = pos.x;
+			row = pos.y;
+			visible[col][row] = true;*/
+			
+			/*
+			if (col>0)
+				if ((!visible[col-1][row]) && (gameArray[col-1][row] == 0))	iterator.add(new Pos(col-1,row));
+			if (col<cols-2)
+				if ((!visible[col+1][row]) && (gameArray[col+1][row] == 0))	iterator.add(new Pos(col+1,row));
+			if (row>0)
+				if ((!visible[col][row-1]) && (gameArray[col][row-1] == 0))	iterator.add(new Pos(col,row-1));
+			if (row<rows-2)
+				if ((!visible[col][row+1]) && (gameArray[col][row+1] == 0))	iterator.add(new Pos(col,row+1));
+		}*/
+				
+				
+				//iterator.hasNext();) {
+		    //Pos pos = iterator.next();
+		    	//iterator.
+		        // Remove the current element from the iterator and the list.
+		       // iterator.remove();
+		   // }
+		//}
+		/*
+		for (Pos item : tilesToCheck) {
+			tilesToCheck.addAll(checkClearTilesNear(item.x,item.y));
+			tilesToCheck.remove(item);
+		}*/
+		//tilesToCheck.addAll(tempVal);
+	}
+	
+	private boolean openClearTiles(int col, int row){
+		
+		tilesToCheck.add(new Pos(col,row));
+		openClearTilesRec(col,row);
+		
 		return true;	
 	}
 
@@ -275,6 +367,16 @@ public class GameArea implements InputProcessor{
 	public boolean scrolled(int amount) {
 		// TODO Auto-generated method stub
 		return false;
+	}
+	
+	private class Pos{
+		public int x;
+		public int y;
+		
+		public Pos(int x, int y){
+			this.x = x;
+			this.y = y;
+		}
 	}
 	
 }
